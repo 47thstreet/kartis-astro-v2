@@ -1,0 +1,68 @@
+---
+import AppShell from '../../../../../layouts/AppShell.astro';
+import { getSession } from 'auth-astro/server';
+import { prisma } from '../../../../../lib/prisma';
+
+const { locale } = Astro.params;
+const session = await getSession(Astro.request);
+if (!session?.user) return Astro.redirect(`/${locale}`);
+
+const email = session.user.email ?? 'guest';
+const role = (session.user as any).role ?? 'GUEST';
+
+const events = await prisma.event.findMany({
+  orderBy: { startsAt: 'desc' },
+  include: { venue: true }
+});
+---
+<AppShell locale={locale} email={email} role={role} title="Events — KARTIS">
+  <div class="max-w-4xl mx-auto px-6 py-12 space-y-8">
+    <div class="flex items-end justify-between">
+      <div class="space-y-1">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/20">Organizer</p>
+        <h1 class="text-3xl font-black text-white">Events</h1>
+      </div>
+      <a href={`/${locale}/app/organizer/events/new`}
+        class="inline-flex h-10 items-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-500 transition-colors shrink-0">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        Create Event
+      </a>
+    </div>
+
+    {events.length === 0 ? (
+      <div class="rounded-2xl p-10 text-center" style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
+        <p class="text-sm font-bold text-white/40">No events created</p>
+        <p class="text-[12px] text-white/20 mt-1">Create your first event to unlock live operations and map tools.</p>
+      </div>
+    ) : (
+      <div class="space-y-2">
+        {events.map((event: any) => (
+          <div class="rounded-2xl p-5 flex items-center justify-between gap-4"
+            style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
+            <div class="space-y-1.5 min-w-0">
+              <p class="font-bold text-white/80 truncate">{event.name}</p>
+              <div class="flex items-center gap-4 text-[12px] text-white/25">
+                <span>{event.venue.name}</span>
+                <span>{new Date(event.startsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <a href={`/${locale}/app/organizer/events/${event.id}/live`}
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-emerald-400/80 ring-1 ring-emerald-500/20 bg-emerald-500/8 hover:bg-emerald-500/15 transition-colors duration-150">
+                Live
+              </a>
+              <a href={`/${locale}/app/organizer/events/${event.id}/report`}
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-sky-400/80 ring-1 ring-sky-500/20 bg-sky-500/8 hover:bg-sky-500/15 transition-colors duration-150">
+                Report
+              </a>
+              <a href={`/${locale}/app/organizer/venues/${event.venueId}/map-editor`}
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-violet-400/80 ring-1 ring-violet-500/20 bg-violet-500/8 hover:bg-violet-500/15 transition-colors duration-150">
+                Map
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</AppShell>

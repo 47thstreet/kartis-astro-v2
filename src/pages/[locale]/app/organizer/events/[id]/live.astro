@@ -1,0 +1,96 @@
+---
+import AppShell from '@/layouts/AppShell.astro';
+import { getSession } from 'auth-astro/server';
+import { prisma } from '@/lib/prisma';
+import LiveStats from '@/components/live/LiveStats';
+
+const { locale, id } = Astro.params;
+
+const session = await getSession(Astro.request);
+if (!session) return Astro.redirect(`/${locale}/login`);
+
+const event = await prisma.event.findUnique({
+  where: { id },
+  include: { orders: { include: { passes: true } }, mapLayouts: { include: { tables: true, zones: true } } },
+});
+
+const paid = event ? event.orders.filter((o: any) => o.status === 'PAID').length : 0;
+const tables = event?.mapLayouts[0]?.tables ?? [];
+const pending = event ? event.orders.filter((o: any) => o.status === 'PENDING').length : 0;
+const total = event ? event.orders.length : 0;
+const checkedIn = event ? event.orders.flatMap((o: any) => o.passes).filter((p: any) => p.usedAt).length : 0;
+const pusherKey = process.env.PUSHER_KEY || null;
+const pusherCluster = process.env.PUSHER_CLUSTER || null;
+---
+
+<AppShell locale={locale!} email={session.user?.email ?? ''} role={(session.user as any)?.role ?? 'ORGANIZER'}>
+  <div class="p-6 max-w-5xl mx-auto space-y-8">
+
+    <!-- Header -->
+    <div class="flex items-start justify-between">
+      <div>
+        <a href={`/${locale}/app/organizer/events`}
+          class="inline-flex items-center gap-1.5 text-[12px] text-white/30 hover:text-white/60 transition-colors mb-3">
+          <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Events
+        </a>
+        <h1 class="text-2xl font-black text-white">{event ? event.name : 'Event not found'}</h1>
+        <p class="text-sm text-white/30 mt-1">Live operations dashboard</p>
+      </div>
+      <div class="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 ring-1 ring-emerald-500/20 px-3 py-1.5 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        Live
+      </div>
+    </div>
+
+    {!event ? (
+      <div class="rounded-2xl p-8 text-center"
+        style="background:rgba(255,255,255,0.02);box-shadow:0 0 0 1px rgba(255,255,255,0.05)">
+        <p class="text-white/30 text-sm">Event not found or inaccessible.</p>
+      </div>
+    ) : (
+      <>
+        <!-- Stats (real-time via Pusher) -->
+        <LiveStats
+          client:load
+          eventId={id!}
+          initialPaid={paid}
+          initialPending={pending}
+          initialTotal={total}
+          initialCheckedIn={checkedIn}
+          pusherKey={pusherKey}
+          pusherCluster={pusherCluster}
+        />
+
+        <!-- Tables -->
+        <div class="rounded-2xl overflow-hidden"
+          style="background:rgba(255,255,255,0.02);box-shadow:0 0 0 1px rgba(255,255,255,0.05)">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-white/[0.05]">
+            <p class="text-[12px] font-bold uppercase tracking-widest text-white/30">Floor map tables</p>
+            <span class="text-[11px] text-white/20">{tables.length} tables</span>
+          </div>
+          {tables.length === 0 ? (
+            <div class="px-5 py-10 text-center">
+              <p class="text-sm text-white/25">No mapped tables — add a venue layout to track live table status.</p>
+            </div>
+          ) : (
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-4">
+              {tables.map((table: any) => {
+                const statusColor =
+                  table.status === 'RESERVED' ? 'bg-emerald-500/15 ring-emerald-500/25 text-emerald-400' :
+                  table.status === 'HELD'     ? 'bg-amber-500/15 ring-amber-500/25 text-amber-400' :
+                                                'bg-white/[0.03] ring-white/[0.06] text-white/30';
+                return (
+                  <div class={`rounded-xl ring-1 px-4 py-3 ${statusColor}`}>
+                    <p class="text-xs font-bold">Table {table.number}</p>
+                    <p class="text-[10px] uppercase tracking-widest mt-0.5 opacity-70">{table.status || 'AVAILABLE'}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </>
+    )}
+  </div>
+</AppShell>

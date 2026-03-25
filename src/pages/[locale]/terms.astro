@@ -1,0 +1,35 @@
+---
+import PageShell from '@/layouts/PageShell.astro';
+const { locale } = Astro.params;
+---
+
+<PageShell locale={locale!} title="Terms of Service — Kartis">
+  <div class="max-w-2xl mx-auto px-6 py-16">
+    <p class="text-[10px] font-bold uppercase tracking-widest text-white/25 mb-3">Legal</p>
+    <h1 class="text-3xl font-black text-white mb-8">Terms of Service</h1>
+    <div class="space-y-6 text-[14px] text-white/40 leading-relaxed">
+      <p>By accessing or using Kartis, you agree to be bound by these terms. If you disagree with any part, do not use our service.</p>
+      <div>
+        <h2 class="text-sm font-bold text-white/70 mb-2">1. Use of Service</h2>
+        <p>Kartis provides event management, ticketing, and table reservation services. You must be 18 or older to purchase tickets or make reservations.</p>
+      </div>
+      <div>
+        <h2 class="text-sm font-bold text-white/70 mb-2">2. Payments</h2>
+        <p>All payments are processed securely by Stripe. Kartis does not store card details. Refund policies are set per-event by the organizer.</p>
+      </div>
+      <div>
+        <h2 class="text-sm font-bold text-white/70 mb-2">3. Accounts</h2>
+        <p>You are responsible for maintaining the confidentiality of your account credentials and for all activity under your account.</p>
+      </div>
+      <div>
+        <h2 class="text-sm font-bold text-white/70 mb-2">4. Limitation of Liability</h2>
+        <p>Kartis is not liable for any indirect, incidental, or consequential damages arising from your use of the platform.</p>
+      </div>
+      <div>
+        <h2 class="text-sm font-bold text-white/70 mb-2">5. Changes</h2>
+        <p>We reserve the right to update these terms at any time. Continued use of Kartis after changes constitutes acceptance.</p>
+      </div>
+      <p class="text-white/20 text-[12px]">Last updated: March 2026 · Questions? <a href={`/${locale}/contact`} class="text-violet-400 hover:text-violet-300 transition-colors">Contact us</a></p>
+    </div>
+  </div>
+</PageShell>

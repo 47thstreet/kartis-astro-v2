@@ -1,0 +1,64 @@
+---
+import PageShell from '../../layouts/PageShell.astro';
+
+const { locale } = Astro.params;
+
+const tiers = [
+  {
+    name: "Starter", price: "2.9%", sub: "per ticket sold",
+    desc: "For venues getting started with digital ticketing.",
+    features: ["Stripe checkout", "QR ticket passes", "Basic reporting", "Up to 2 staff accounts"],
+    cta: "Get started", highlight: false,
+  },
+  {
+    name: "Growth", price: "Custom", sub: "commission tiers",
+    desc: "Built for venues with active promoter networks.",
+    features: ["Everything in Starter", "Promoter attribution", "Commission ledger", "Tiered payout rules", "Live table maps"],
+    cta: "Talk to us", highlight: true,
+  },
+  {
+    name: "Enterprise", price: "Custom", sub: "dedicated contract",
+    desc: "Full-service for multi-venue operators.",
+    features: ["Everything in Growth", "Dedicated support", "Custom integrations", "SLA guarantee", "White-label options"],
+    cta: "Contact sales", highlight: false,
+  },
+];
+---
+<PageShell locale={locale} title="Pricing — KARTIS">
+  <div class="max-w-5xl mx-auto px-6 py-16">
+    <div class="text-center mb-14 space-y-3">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/25">Pricing</p>
+      <h1 class="text-4xl font-black tracking-tight text-white">Simple, aligned pricing</h1>
+      <p class="text-sm text-white/35 max-w-sm mx-auto leading-relaxed">We grow when you grow.</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-3">
+      {tiers.map(({ name, price, sub, desc, features, cta, highlight }) => (
+        <div class="relative rounded-2xl p-6 flex flex-col"
+          style={highlight
+            ? "background: linear-gradient(160deg, rgba(124,58,237,0.12), rgba(99,102,241,0.06)); box-shadow: 0 0 0 1px rgba(124,58,237,0.25), 0 0 60px rgba(124,58,237,0.06)"
+            : "background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)"}>
+          {highlight && <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-400/40 to-transparent rounded-t-2xl" />}
+          {highlight && <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-violet-500 text-white">Popular</span>}
+          <p class="text-xs font-bold uppercase tracking-widest text-white/30 mb-3">{name}</p>
+          <div class="mb-1">
+            <span class="text-3xl font-black text-white">{price}</span>
+            <span class="text-xs text-white/30 ml-2">{sub}</span>
+          </div>
+          <p class="text-[12px] text-white/30 mb-6 leading-relaxed">{desc}</p>
+          <ul class="space-y-2.5 mb-8 flex-1">
+            {features.map(f => (
+              <li class="flex items-start gap-2.5 text-[12px] text-white/50">
+                <svg class="w-3.5 h-3.5 text-violet-400/70 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                {f}
+              </li>
+            ))}
+          </ul>
+          <a href={`/${locale}/contact`}
+            class={`block w-full text-center py-3 rounded-xl text-[13px] font-bold transition-all duration-200 ${highlight ? 'text-white bg-violet-600 hover:bg-violet-500' : 'text-white/60 ring-1 ring-white/8 hover:ring-white/15 hover:text-white/80'}`}>
+            {cta}
+          </a>
+        </div>
+      ))}
+    </div>
+  </div>
+</PageShell>

@@ -1,0 +1,40 @@
+---
+import AppShell from '../../../../../../layouts/AppShell.astro';
+import { getSession } from 'auth-astro/server';
+import { prisma } from '../../../../../../lib/prisma';
+import CreateEventForm from '../../../../../../components/forms/CreateEventForm';
+
+const { locale } = Astro.params;
+const session = await getSession(Astro.request);
+if (!session?.user) return Astro.redirect(`/${locale}`);
+
+const email = session.user.email ?? 'guest';
+const role = (session.user as any).role ?? 'GUEST';
+
+if (!['ORGANIZER', 'SUPER_ADMIN'].includes(role)) {
+  return Astro.redirect(`/${locale}/app`);
+}
+
+const venues = await prisma.venue.findMany({
+  orderBy: { name: 'asc' },
+  select: { id: true, name: true },
+});
+---
+<AppShell locale={locale} email={email} role={role} title="Create Event — KARTIS">
+  <div class="max-w-2xl mx-auto px-6 py-12">
+    <div class="mb-8 space-y-1">
+      <a href={`/${locale}/app/organizer/events`} class="text-[12px] text-white/30 hover:text-white/50 transition-colors">&larr; Back to events</a>
+      <h1 class="text-3xl font-black text-white">Create Event</h1>
+      <p class="text-sm text-white/30">Fill in the basics. You can add more ticket types and set up the floor plan after creating.</p>
+    </div>
+
+    {venues.length === 0 ? (
+      <div class="rounded-2xl p-10 text-center" style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
+        <p class="text-sm font-bold text-white/40">No venues yet</p>
+        <p class="text-[12px] text-white/20 mt-1">Ask an admin to create a venue before you can add events.</p>
+      </div>
+    ) : (
+      <CreateEventForm client:load venues={venues} locale={locale!} />
+    )}
+  </div>
+</AppShell>

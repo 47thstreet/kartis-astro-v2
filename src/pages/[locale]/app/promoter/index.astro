@@ -1,0 +1,68 @@
+---
+import AppShell from '../../../../layouts/AppShell.astro';
+import { getSession } from 'auth-astro/server';
+import { prisma } from '../../../../lib/prisma';
+
+const { locale } = Astro.params;
+const session = await getSession(Astro.request);
+if (!session?.user) return Astro.redirect(`/${locale}`);
+
+const userId = (session.user as any).id;
+const email = session.user.email ?? 'guest';
+const role = (session.user as any).role ?? 'GUEST';
+
+const promoter = userId ? await prisma.promoter.findUnique({
+  where: { userId },
+  include: { links: true, ledgers: true }
+}) : null;
+
+const owed = promoter?.ledgers
+  .filter((e: any) => e.status === 'PENDING')
+  .reduce((t: number, e: any) => t + e.amountCents, 0) ?? 0;
+---
+<AppShell locale={locale} email={email} role={role} title="Promoter — KARTIS">
+  <div class="max-w-3xl mx-auto px-6 py-12 space-y-8">
+    <div class="space-y-1">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/20">Promoter</p>
+      <h1 class="text-3xl font-black text-white">Your Dashboard</h1>
+    </div>
+
+    {!promoter ? (
+      <div class="rounded-2xl p-10 text-center" style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
+        <p class="text-sm font-bold text-white/40">No promoter profile yet</p>
+        <p class="text-[12px] text-white/20 mt-1">Ask an organizer to connect your promoter account.</p>
+      </div>
+    ) : (
+      <>
+        <div class="rounded-2xl p-5 flex items-center gap-4" style="background: rgba(124,58,237,0.08); box-shadow: 0 0 0 1px rgba(124,58,237,0.15)">
+          <div class="w-10 h-10 rounded-xl bg-violet-500/15 ring-1 ring-violet-500/25 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+          </div>
+          <div>
+            <p class="text-[11px] font-semibold uppercase tracking-widest text-white/30">Pending Commission</p>
+            <p class="text-2xl font-black text-white">${(owed / 100).toFixed(2)}</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.15em] text-white/25">Active Links</p>
+          {promoter.links.length === 0 ? (
+            <p class="text-sm text-white/30">No active links yet.</p>
+          ) : (
+            <div class="space-y-2">
+              {promoter.links.map((link: any) => (
+                <div class="rounded-2xl p-5 flex items-center justify-between" style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
+                  <span class="text-sm font-mono text-white/60">{link.code}</span>
+                  <div class="flex items-center gap-6 text-[12px] text-white/30">
+                    <span>{link.clicks} clicks</span>
+                    <span class="font-semibold text-white/50">${(link.revenueCents / 100).toFixed(2)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </>
+    )}
+  </div>
+</AppShell>

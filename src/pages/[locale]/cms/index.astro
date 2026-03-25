@@ -1,0 +1,9 @@
+---
+import Base from '@/layouts/Base.astro';
+import CmsAdmin from '@/components/cms/CmsAdmin';
+
+const { locale } = Astro.params;
+---
+<Base title="CMS — KARTIS">
+  <CmsAdmin locale={locale!} client:load />
+</Base>

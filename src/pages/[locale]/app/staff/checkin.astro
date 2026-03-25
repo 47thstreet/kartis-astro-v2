@@ -1,0 +1,15 @@
+---
+import AppShell from '../../../../layouts/AppShell.astro';
+import { getSession } from 'auth-astro/server';
+import StaffCheckin from '../../../../components/StaffCheckin';
+
+const { locale } = Astro.params;
+const session = await getSession(Astro.request);
+if (!session?.user) return Astro.redirect(`/${locale}`);
+
+const email = session.user.email ?? 'guest';
+const role = (session.user as any).role ?? 'GUEST';
+---
+<AppShell locale={locale} email={email} role={role} title="QR Check-In — KARTIS">
+  <StaffCheckin client:load />
+</AppShell>

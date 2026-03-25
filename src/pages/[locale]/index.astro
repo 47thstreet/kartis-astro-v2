@@ -1,0 +1,69 @@
+---
+import Base from '../../layouts/Base.astro';
+import LandingPage from '../../components/LandingPage';
+
+const { locale } = Astro.params;
+---
+<Base title="KARTIS APP">
+  <!-- SSR fallback: visible immediately, replaced once React hydrates -->
+  <div id="landing-fallback" class="min-h-screen bg-[#05050a] text-white">
+    <header class="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 py-4 backdrop-blur-xl border-b border-white/[0.04]" style="background: rgba(5,5,10,0.75)">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded-lg bg-violet-500/20 ring-1 ring-violet-500/30 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-violet-400"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+        </div>
+        <span class="text-sm font-black tracking-[0.18em] uppercase text-white/90">KARTIS APP</span>
+      </div>
+      <nav class="hidden md:flex items-center gap-6 text-[13px] text-white/40 font-medium">
+        <a href={`/${locale}/features`} class="hover:text-white/80 transition-colors">Features</a>
+        <a href={`/${locale}/pricing`} class="hover:text-white/80 transition-colors">Pricing</a>
+        <a href={`/${locale}/venues`} class="hover:text-white/80 transition-colors">Venues</a>
+        <a href={`/${locale}/contact`} class="hover:text-white/80 transition-colors">Contact</a>
+      </nav>
+      <a href={`/${locale}/contact`} class="px-4 py-2 rounded-lg text-[13px] font-semibold text-white ring-1 ring-white/10 bg-white/[0.04] hover:bg-white/[0.08] transition-colors">Get access</a>
+    </header>
+
+    <section class="flex flex-col items-center justify-center min-h-screen px-6 pt-24 pb-16">
+      <div class="mb-7 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full ring-1 ring-violet-400/20 bg-violet-500/[0.08] text-[11px] font-semibold tracking-widest uppercase text-violet-300/70">
+        <span class="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse"></span>
+        2026 nightlife operating system
+      </div>
+      <h1 class="max-w-3xl text-center text-5xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.05]">
+        <span class="text-white">Sell out every</span><br />
+        <span class="bg-clip-text text-transparent" style="background-image: linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #38bdf8 100%)">night.</span>
+      </h1>
+      <p class="mt-5 max-w-lg text-center text-[15px] text-white/35 leading-relaxed">
+        Real-time table maps, Stripe checkout, promoter attribution,
+        and QR check-ins — one stack for the whole night.
+      </p>
+      <div class="mt-9 flex items-center gap-3">
+        <a href={`/${locale}/contact`} class="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white" style="background: linear-gradient(135deg, hsl(262 83% 60%), hsl(252 83% 55%))">
+          Book a demo
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <a href={`/${locale}/events`} class="px-6 py-3 rounded-xl text-sm font-semibold text-white/50 ring-1 ring-white/8 hover:text-white/70 hover:ring-white/15 transition-all">
+          Browse events
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <div id="landing-hydrated" style="display:none;">
+    <LandingPage locale={locale} client:load />
+  </div>
+
+  <script>
+    // Once React hydrates, hide fallback and show the interactive version
+    const observer = new MutationObserver(() => {
+      const hydrated = document.getElementById('landing-hydrated');
+      if (hydrated && hydrated.children.length > 0 && hydrated.children[0].children.length > 0) {
+        const fallback = document.getElementById('landing-fallback');
+        if (fallback) fallback.style.display = 'none';
+        hydrated.style.display = '';
+        observer.disconnect();
+      }
+    });
+    const target = document.getElementById('landing-hydrated');
+    if (target) observer.observe(target, { childList: true, subtree: true });
+  </script>
+</Base>

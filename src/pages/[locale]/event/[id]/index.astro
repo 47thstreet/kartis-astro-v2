@@ -1,0 +1,322 @@
+---
+import Base from '@/layouts/Base.astro';
+import { prisma } from '@/lib/prisma';
+import { formatMoney } from '@/lib/utils';
+import PurchasePanel from '@/components/events/purchase-panel';
+
+const { locale, id } = Astro.params;
+
+const event = await prisma.event.findUnique({
+  where: { id },
+  include: {
+    venue: true,
+    ticketTypes: { orderBy: { priceCents: 'asc' } },
+    tablePackages: { orderBy: { priceCents: 'asc' } },
+  },
+});
+
+if (!event) return Astro.redirect('/404');
+
+function fmtDate(d: Date) {
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
+}
+function fmtTime(d: Date) {
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+const isPast     = event.endsAt < new Date();
+const hasFlyer   = !!event.flyerImage;
+const startDate  = fmtDate(event.startsAt);
+const startTime  = fmtTime(event.startsAt);
+const endTime    = fmtTime(event.endsAt);
+const lowestPrice = event.ticketTypes[0] ? formatMoney(event.ticketTypes[0].priceCents, event.currency) : null;
+
+const tickets = event.ticketTypes
+  .filter((t: any) => t.capacity - t.soldCount > 0)
+  .map((t: any) => ({ id: t.id, name: t.name, priceLabel: formatMoney(t.priceCents, event.currency) }));
+const tables = event.tablePackages
+  .map((t: any) => ({ id: t.id, name: `${t.name} (${t.capacity})`, priceLabel: formatMoney(t.priceCents, event.currency) }));
+
+// Precompute ticket display data to avoid < in template
+const ticketDisplay = event.ticketTypes.map((t: any) => {
+  const remaining = t.capacity - t.soldCount;
+  const soldOut = remaining < 1;
+  const scarce = !soldOut && remaining < 21;
+  const saleEnd = new Date(t.saleEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const statusLabel = soldOut ? 'Sold out' : scarce ? `${remaining} left` : 'Available';
+  const statusColor = soldOut ? 'text-red-400/70 font-semibold' : scarce ? 'text-amber-400/70 font-semibold' : 'text-emerald-400/60';
+  const priceClass = soldOut ? 'text-sm font-bold text-white/30 line-through' : 'text-sm font-bold text-white';
+  return { ...t, remaining, soldOut, scarce, saleEnd, statusLabel, statusColor, priceClass, formattedPrice: formatMoney(t.priceCents, event.currency) };
+});
+
+const tableDisplay = event.tablePackages.map((t: any) => ({
+  ...t,
+  formattedPrice: formatMoney(t.priceCents, event.currency),
+  formattedMinSpend: formatMoney(t.minimumSpendCents, event.currency),
+}));
+---
+
+<Base title={`${event.name} — Kartis`}>
+  <div class="min-h-screen bg-[#05050a] text-white">
+    <!-- Background -->
+    <div class="fixed inset-0 pointer-events-none -z-10">
+      <div class="absolute top-[-15%] left-[30%] w-[700px] h-[500px] rounded-full blur-[140px]"
+        style="background:radial-gradient(circle,rgba(124,58,237,0.16),transparent 70%)"></div>
+      <div class="absolute bottom-[-10%] right-[10%] w-[500px] h-[400px] rounded-full blur-[120px]"
+        style="background:radial-gradient(circle,rgba(99,102,241,0.10),transparent 70%)"></div>
+      <div class="absolute inset-0 opacity-[0.025]"
+        style="background-image:linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px);background-size:44px 44px"></div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="sticky top-0 z-40 flex items-center justify-between px-6 py-4 border-b border-white/[0.04] backdrop-blur-xl"
+      style="background:rgba(5,5,10,0.75)">
+      <a href={`/${locale}/events`}
+        class="flex items-center gap-2 text-[13px] text-white/40 hover:text-white/70 transition-colors">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Events
+      </a>
+      <div class="flex items-center gap-1.5 text-[11px] text-white/25">
+        <svg class="w-3 h-3 text-emerald-400/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Secured by Stripe
+      </div>
+    </nav>
+
+    <!-- Single-column body -->
+    <div class="flex-1 w-full max-w-2xl mx-auto px-4 py-10 md:py-14 space-y-6">
+
+      <!-- ① Flyer / Hero -->
+      <div class="relative rounded-3xl overflow-hidden"
+        style="background:rgba(255,255,255,0.02);box-shadow:0 0 0 1px rgba(255,255,255,0.06),0 24px 64px rgba(0,0,0,0.4)">
+        <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-400/50 to-transparent z-10"></div>
+
+        {hasFlyer ? (
+          <div class="relative">
+            <img src={event.flyerImage!} alt={event.name} class="w-full aspect-[3/4] sm:aspect-[16/9] object-cover" />
+            <div class="absolute inset-0 bg-gradient-to-t from-[#05050a] via-transparent to-transparent"></div>
+            <div class="absolute top-4 left-5 z-10">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest backdrop-blur-md"
+                style={isPast
+                  ? "background:rgba(239,68,68,0.3);color:rgba(252,165,165,1);box-shadow:inset 0 0 0 1px rgba(239,68,68,0.4)"
+                  : "background:rgba(124,58,237,0.4);color:rgba(167,139,250,1);box-shadow:inset 0 0 0 1px rgba(124,58,237,0.5)"}>
+                {isPast ? 'Event Ended' : 'Live Event'}
+              </span>
+            </div>
+            <div class="absolute bottom-5 left-5 right-5 z-10">
+              <h1 class="text-3xl sm:text-4xl font-black text-white leading-tight tracking-tight drop-shadow-xl line-clamp-2">
+                {event.name}
+              </h1>
+            </div>
+          </div>
+        ) : (
+          <div class="relative h-52 overflow-hidden"
+            style="background:linear-gradient(135deg,rgba(124,58,237,0.25) 0%,rgba(99,102,241,0.12) 60%,rgba(5,5,10,0.9) 100%)">
+            <div class="absolute -top-8 -left-8 w-56 h-56 rounded-full blur-3xl opacity-60"
+              style="background:radial-gradient(circle,rgba(124,58,237,0.6),transparent 70%)"></div>
+            <div class="absolute -bottom-8 right-[5%] w-48 h-48 rounded-full blur-3xl opacity-50"
+              style="background:radial-gradient(circle,rgba(99,102,241,0.5),transparent 70%)"></div>
+            <div class="absolute inset-0 opacity-[0.035]"
+              style="background-image:repeating-linear-gradient(45deg,white 0,white 1px,transparent 0,transparent 50%);background-size:10px 10px"></div>
+            <div class="absolute top-4 left-5">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest"
+                style={isPast
+                  ? "background:rgba(239,68,68,0.25);color:rgba(252,165,165,1);box-shadow:inset 0 0 0 1px rgba(239,68,68,0.4)"
+                  : "background:rgba(124,58,237,0.25);color:rgba(167,139,250,1);box-shadow:inset 0 0 0 1px rgba(124,58,237,0.4)"}>
+                {isPast ? 'Event Ended' : 'Live Event'}
+              </span>
+            </div>
+            <div class="absolute bottom-4 left-5 right-5">
+              <h1 class="text-3xl sm:text-4xl font-black text-white leading-tight tracking-tight drop-shadow-xl line-clamp-2">
+                {event.name}
+              </h1>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <!-- ② Event info grid -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex items-start gap-3 rounded-2xl p-4" style="background:rgba(255,255,255,0.02);box-shadow:0 0 0 1px rgba(255,255,255,0.05)">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(124,58,237,0.15)">
+            <svg class="w-4 h-4 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="min-w-0">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-white/25 mb-0.5">Date</p>
+            <p class="text-[13px] font-semibold text-white/75 leading-snug truncate">{startDate}</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 rounded-2xl p-4" style="background:rgba(255,255,255,0.02);box-shadow:0 0 0 1px rgba(255,255,255,0.05)">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(124,58,237,0.15)">
+            <svg class="w-4 h-4 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="min-w-0">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-white/25 mb-0.5">Time</p>
+            <p class="text-[13px] font-semibold text-white/75 leading-snug truncate">{startTime} – {endTime}</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 rounded-2xl p-4" style="background:rgba(255,255,255,0.02);box-shadow:0 0 0 1px rgba(255,255,255,0.05)">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(124,58,237,0.15)">
+            <svg class="w-4 h-4 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div class="min-w-0">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-white/25 mb-0.5">Venue</p>
+            <p class="text-[13px] font-semibold text-white/75 leading-snug truncate">{event.venue.name}</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 rounded-2xl p-4" style="background:rgba(255,255,255,0.02);box-shadow:0 0 0 1px rgba(255,255,255,0.05)">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(124,58,237,0.15)">
+            <svg class="w-4 h-4 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <div class="min-w-0">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-white/25 mb-0.5">Capacity</p>
+            <p class="text-[13px] font-semibold text-white/75 leading-snug truncate">{event.capacity} guests</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div class="rounded-2xl px-5 py-4"
+        style="background:rgba(255,255,255,0.02);box-shadow:0 0 0 1px rgba(255,255,255,0.05)">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-white/20 mb-1">Address</p>
+        <p class="text-[13px] text-white/60 font-medium">{event.venue.address}</p>
+        <p class="text-[12px] text-white/30">{event.venue.city}</p>
+      </div>
+
+      <!-- ③ Description -->
+      {event.description && (
+        <div class="rounded-2xl px-5 py-4"
+          style="background:rgba(255,255,255,0.02);box-shadow:0 0 0 1px rgba(255,255,255,0.05)">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-white/20 mb-2">About this event</p>
+          <p class="text-[13px] text-white/45 leading-relaxed whitespace-pre-line">{event.description}</p>
+        </div>
+      )}
+
+      <!-- ④ Ticket tiers -->
+      {event.ticketTypes.length > 0 && (
+        <div class="rounded-2xl overflow-hidden"
+          style="background:rgba(255,255,255,0.02);box-shadow:0 0 0 1px rgba(255,255,255,0.05)">
+          <div class="flex items-center gap-2.5 px-5 py-4 border-b border-white/[0.05]">
+            <svg class="w-4 h-4 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9a3 3 0 010-6h20a3 3 0 010 6"/><path d="M2 15a3 3 0 000 6h20a3 3 0 000-6"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+            <p class="text-[12px] font-bold uppercase tracking-widest text-white/30">Tickets</p>
+          </div>
+          <div class="divide-y divide-white/[0.04]">
+            {ticketDisplay.map((t) => (
+              <div class="px-5 py-4 space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-white/80 font-semibold">{t.name}</span>
+                  <span class={t.priceClass}>{t.formattedPrice}</span>
+                </div>
+                {t.description && <p class="text-[12px] text-white/30 leading-relaxed">{t.description}</p>}
+                <div class="flex items-center gap-3 text-[11px]">
+                  <span class={t.statusColor}>{t.statusLabel}</span>
+                  <span class="text-white/15">·</span>
+                  <span class="text-white/20">Sale ends {t.saleEnd}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <!-- ⑤ Table packages -->
+      {event.tablePackages.length > 0 && (
+        <div class="rounded-2xl overflow-hidden"
+          style="background:rgba(255,255,255,0.02);box-shadow:0 0 0 1px rgba(255,255,255,0.05)">
+          <div class="flex items-center gap-2.5 px-5 py-4 border-b border-white/[0.05]">
+            <svg class="w-4 h-4 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+            <p class="text-[12px] font-bold uppercase tracking-widest text-white/30">Tables</p>
+          </div>
+          <div class="divide-y divide-white/[0.04]">
+            {tableDisplay.map((t) => (
+              <div class="px-5 py-4 space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-white/80 font-semibold">{t.name}</span>
+                  <span class="text-sm font-bold text-white">{t.formattedPrice}</span>
+                </div>
+                <div class="flex items-center gap-3 text-[11px] text-white/25">
+                  <span>{t.capacity} guests</span>
+                  <span class="text-white/10">·</span>
+                  <span>Min. spend {t.formattedMinSpend}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <!-- ⑥ What's included -->
+      <div class="rounded-2xl px-5 py-4 space-y-3"
+        style="background:rgba(255,255,255,0.02);box-shadow:0 0 0 1px rgba(255,255,255,0.05)">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-white/20">What's included</p>
+        {[
+          'Unique QR ticket delivered to your email',
+          'Entry pass valid at the door — no app needed',
+          'Instant order confirmation from KARTIS',
+          'Covered by our buyer guarantee',
+        ].map(item => (
+          <div class="flex items-center gap-3 text-[13px] text-white/45">
+            <svg class="w-3.5 h-3.5 text-emerald-400/80 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            {item}
+          </div>
+        ))}
+      </div>
+
+      <!-- ⑦ Buy card -->
+      <div class="relative rounded-3xl overflow-hidden"
+        style="background:rgba(255,255,255,0.02);box-shadow:0 0 0 1px rgba(255,255,255,0.07),0 32px 80px rgba(0,0,0,0.4)">
+        <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-400/50 to-transparent"></div>
+
+        {isPast ? (
+          <div class="px-6 py-6">
+            <button disabled
+              class="w-full py-4 rounded-2xl text-[14px] font-bold uppercase tracking-widest cursor-not-allowed"
+              style="background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.25);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06)">
+              Event Ended
+            </button>
+          </div>
+        ) : (
+          <>
+            <div class="flex items-end justify-between px-6 pt-6 pb-5 border-b border-white/[0.05]">
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-white/25 mb-1">Get tickets</p>
+                <p class="text-[13px] text-white/40">{event.name}</p>
+              </div>
+              {lowestPrice && (
+                <div class="text-right shrink-0">
+                  <p class="text-[10px] text-white/20 mb-0.5">from</p>
+                  <p class="text-3xl font-black text-white">{lowestPrice}</p>
+                </div>
+              )}
+            </div>
+
+            <div class="px-6 py-6">
+              <PurchasePanel
+                eventId={event.id}
+                locale={locale!}
+                tickets={tickets}
+                tables={tables}
+                client:load
+              />
+            </div>
+          </>
+        )}
+      </div>
+
+      <!-- Footer trust -->
+      <div class="flex items-center justify-between px-1 pb-4">
+        <div class="flex items-center gap-4 flex-wrap">
+          {['PCI-DSS', 'SSL', 'Stripe'].map(label => (
+            <span class="flex items-center gap-1.5 text-[11px] text-white/20">
+              <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              {label}
+            </span>
+          ))}
+        </div>
+        <a href={`/${locale}/contact`} class="text-[11px] text-white/20 hover:text-white/40 transition-colors underline underline-offset-2">
+          Need help?
+        </a>
+      </div>
+
+    </div>
+  </div>
+</Base>

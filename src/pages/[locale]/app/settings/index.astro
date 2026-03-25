@@ -1,0 +1,22 @@
+---
+import AppShell from '../../../../layouts/AppShell.astro';
+import { getSession } from 'auth-astro/server';
+import SettingsForm from '../../../../components/forms/SettingsForm';
+
+const { locale } = Astro.params;
+const session = await getSession(Astro.request);
+if (!session?.user) return Astro.redirect(`/${locale}/login`);
+
+const email = session.user.email ?? '';
+const name = session.user.name ?? '';
+const role = (session.user as any).role ?? 'GUEST';
+---
+<AppShell locale={locale} email={email} role={role} title="Settings — KARTIS">
+  <div class="max-w-lg mx-auto px-6 py-12">
+    <div class="mb-8 space-y-1">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/20">Account</p>
+      <h1 class="text-3xl font-black text-white">Settings</h1>
+    </div>
+    <SettingsForm client:load name={name} email={email} role={role} />
+  </div>
+</AppShell>

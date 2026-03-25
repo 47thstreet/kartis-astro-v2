@@ -1,0 +1,33 @@
+---
+import PageShell from '../../../layouts/PageShell.astro';
+import { prisma } from '../../../lib/prisma';
+
+const { locale } = Astro.params;
+const venues = await prisma.venue.findMany({ include: { events: true }, orderBy: { name: 'asc' } });
+---
+<PageShell locale={locale} title="Venues — KARTIS">
+  <div class="max-w-4xl mx-auto px-6 py-16">
+    <div class="mb-10 space-y-3">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/25">Locations</p>
+      <h1 class="text-4xl font-black tracking-tight text-white">Venues</h1>
+    </div>
+
+    {venues.length === 0 ? (
+      <div class="rounded-2xl p-10 text-center" style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
+        <p class="text-sm font-bold text-white/40">No venues yet</p>
+      </div>
+    ) : (
+      <div class="grid gap-3 sm:grid-cols-2">
+        {venues.map((venue: any) => (
+          <div class="rounded-2xl p-5 space-y-3" style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
+            <p class="font-bold text-white/85">{venue.name}</p>
+            <div class="space-y-1.5 text-[12px] text-white/30">
+              <p>{venue.city} · {venue.address}</p>
+              <p>{venue.events.length} event{venue.events.length !== 1 ? 's' : ''}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</PageShell>

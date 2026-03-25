@@ -1,0 +1,16 @@
+---
+import PageShell from '../../layouts/PageShell.astro';
+import ContactForm from '../../components/ContactForm';
+
+const { locale } = Astro.params;
+---
+<PageShell locale={locale} title="Contact — KARTIS">
+  <div class="max-w-lg mx-auto px-6 py-16">
+    <div class="mb-10 space-y-3">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/25">Get in touch</p>
+      <h1 class="text-4xl font-black tracking-tight text-white">Book a demo</h1>
+      <p class="text-sm text-white/35 leading-relaxed">Tell us about your venue and we will set you up.</p>
+    </div>
+    <ContactForm client:load />
+  </div>
+</PageShell>

@@ -1,0 +1,29 @@
+---
+import PageShell from '../../layouts/PageShell.astro';
+
+const { locale } = Astro.params;
+
+const faqs = [
+  { q: "Can I get a refund on my ticket?", a: "Refunds are available up to 24 hours before the event, if the organizer's policy allows it. Check the event page for specific terms." },
+  { q: "What happens if a table hold expires?", a: "Table holds auto-release after the configured timeout (typically 8 minutes) if payment isn't completed. The table becomes available again immediately." },
+  { q: "How do QR tickets work?", a: "After purchase, a unique QR code is emailed to you. At the door, staff scan it with the Kartis check-in tool to validate entry." },
+  { q: "How does the promoter commission system work?", a: "Promoters receive a unique referral link. Every sale attributed to that link earns a commission based on the event's configured tier rules." },
+  { q: "Is my payment information secure?", a: "Yes. All payments are processed by Stripe. Kartis never stores raw card data — everything is PCI-DSS compliant." },
+];
+---
+<PageShell locale={locale} title="FAQ — KARTIS">
+  <div class="max-w-2xl mx-auto px-6 py-16">
+    <div class="mb-12 space-y-3">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/25">Support</p>
+      <h1 class="text-4xl font-black tracking-tight text-white">FAQ</h1>
+    </div>
+    <div class="space-y-2">
+      {faqs.map(({ q, a }) => (
+        <div class="rounded-2xl p-5" style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
+          <p class="text-sm font-bold text-white/80 mb-2">{q}</p>
+          <p class="text-[12px] text-white/35 leading-relaxed">{a}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</PageShell>

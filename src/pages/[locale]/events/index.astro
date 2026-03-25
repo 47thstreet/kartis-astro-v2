@@ -1,0 +1,143 @@
+---
+import PageShell from '../../../layouts/PageShell.astro';
+import { prisma } from '../../../lib/prisma';
+
+const { locale } = Astro.params;
+const q = Astro.url.searchParams.get('q')?.trim() || '';
+const venueFilter = Astro.url.searchParams.get('venue') || '';
+
+const where: any = { isPublished: true };
+if (q) {
+  where.name = { contains: q, mode: 'insensitive' };
+}
+if (venueFilter) {
+  where.venueId = venueFilter;
+}
+
+const [events, venues] = await Promise.all([
+  prisma.event.findMany({
+    where,
+    include: { ticketTypes: true, venue: true },
+    orderBy: { startsAt: 'asc' },
+  }),
+  prisma.venue.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
+]);
+
+function formatMoney(cents: number, currency = 'USD') {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(cents / 100);
+}
+
+const now = new Date();
+const upcoming = events.filter(e => e.endsAt >= now);
+const past = events.filter(e => e.endsAt < now).reverse();
+---
+<PageShell locale={locale} title="Events — KARTIS">
+  <div class="max-w-4xl mx-auto px-6 py-16">
+    <div class="mb-10 space-y-3">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/25">Upcoming</p>
+      <h1 class="text-4xl font-black tracking-tight text-white">Events</h1>
+    </div>
+
+    <!-- Search & Filter -->
+    <form method="get" class="mb-8 flex flex-wrap gap-3">
+      <input
+        type="text"
+        name="q"
+        value={q}
+        placeholder="Search events…"
+        class="h-10 flex-1 min-w-[180px] rounded-xl border border-white/10 bg-white/[0.03] px-4 text-sm text-white placeholder-white/30 outline-none focus:border-violet-500/50 transition-colors"
+      />
+      <select
+        name="venue"
+        class="h-10 rounded-xl border border-white/10 bg-white/[0.03] px-4 text-sm text-white/70 outline-none focus:border-violet-500/50 transition-colors appearance-none cursor-pointer"
+      >
+        <option value="" class="bg-black">All venues</option>
+        {venues.map(v => (
+          <option value={v.id} selected={v.id === venueFilter} class="bg-black">{v.name}</option>
+        ))}
+      </select>
+      <button
+        type="submit"
+        class="h-10 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-500 transition-colors"
+      >
+        Search
+      </button>
+      {(q || venueFilter) && (
+        <a href={`/${locale}/events`} class="h-10 flex items-center rounded-xl border border-white/10 px-4 text-sm text-white/40 hover:text-white/60 transition-colors">
+          Clear
+        </a>
+      )}
+    </form>
+
+    {upcoming.length === 0 ? (
+      <div class="rounded-2xl p-10 text-center" style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
+        <p class="text-sm font-bold text-white/40">No upcoming events yet</p>
+        <p class="text-[12px] text-white/20 mt-1">New drops appear here as soon as organizers publish them.</p>
+      </div>
+    ) : (
+      <div class="space-y-2">
+        {upcoming.map(event => {
+          const from = event.ticketTypes.length
+            ? Math.min(...event.ticketTypes.map((t: any) => t.priceCents))
+            : null;
+          return (
+            <a href={`/${locale}/event/${event.id}`}
+              class="group flex items-center justify-between rounded-2xl p-5 transition-all duration-200 hover:bg-white/[0.03]"
+              style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
+              <div class="space-y-1.5 min-w-0">
+                <p class="font-bold text-white/85 group-hover:text-white transition-colors duration-200 truncate">{event.name}</p>
+                <div class="flex items-center gap-4 text-[12px] text-white/30">
+                  <span>{event.venue.name}</span>
+                  <span>{new Date(event.startsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 shrink-0 ml-4">
+                <span class="text-sm font-bold text-violet-400/80">
+                  {from === null ? 'TBA' : `From ${formatMoney(from, event.currency)}`}
+                </span>
+                <svg class="w-4 h-4 text-white/15 group-hover:text-white/40 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    )}
+
+    {past.length > 0 && (
+      <>
+        <div class="mt-14 mb-6">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/25">Past Events</p>
+        </div>
+        <div class="space-y-2">
+          {past.map(event => {
+            const from = event.ticketTypes.length
+              ? Math.min(...event.ticketTypes.map((t: any) => t.priceCents))
+              : null;
+            return (
+              <a href={`/${locale}/event/${event.id}`}
+                class="group flex items-center justify-between rounded-2xl p-5 transition-all duration-200 hover:bg-white/[0.03] opacity-60"
+                style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
+                <div class="space-y-1.5 min-w-0">
+                  <div class="flex items-center gap-2.5">
+                    <p class="font-bold text-white/85 group-hover:text-white transition-colors duration-200 truncate">{event.name}</p>
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest shrink-0"
+                      style="background:rgba(239,68,68,0.15);color:rgba(252,165,165,0.8);box-shadow:inset 0 0 0 1px rgba(239,68,68,0.25)">
+                      Ended
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-4 text-[12px] text-white/30">
+                    <span>{event.venue.name}</span>
+                    <span>{new Date(event.startsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 shrink-0 ml-4">
+                  <svg class="w-4 h-4 text-white/15 group-hover:text-white/40 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </>
+    )}
+  </div>
+</PageShell>

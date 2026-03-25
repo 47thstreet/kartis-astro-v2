@@ -1,0 +1,171 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getStripe } from '@/lib/stripe';
+import { transporter } from '@/lib/email';
+import * as Sentry from '@sentry/node';
+
+const { locale } = Astro.params;
+const sessionId = Astro.url.searchParams.get('session_id') ?? '';
+const isRsvp = Astro.url.searchParams.get('rsvp') === '1';
+
+let customerName = 'there';
+let customerEmail = '';
+let customerPhone = '';
+let eventName = 'your event';
+
+if (isRsvp) {
+  // Free RSVP flow — data comes from query params
+  customerName = Astro.url.searchParams.get('name') ?? customerName;
+  customerEmail = Astro.url.searchParams.get('email') ?? '';
+  customerPhone = Astro.url.searchParams.get('phone') ?? '';
+  eventName = Astro.url.searchParams.get('event') ?? eventName;
+
+  if (customerEmail) {
+    try {
+      await transporter.sendMail({
+        from: `"Kartis" <${import.meta.env.SMTP_USER}>`,
+        to: customerEmail,
+        subject: `RSVP Confirmed — ${eventName}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#080810;color:#fff;padding:40px;border-radius:16px;border:1px solid rgba(255,255,255,0.06);">
+            <div style="margin-bottom:28px;">
+              <span style="background:rgba(16,185,129,0.15);color:#6ee7b7;font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;padding:6px 12px;border-radius:6px;border:1px solid rgba(16,185,129,0.2);">RSVP Confirmed</span>
+            </div>
+            <h1 style="color:#fff;font-size:28px;font-weight:900;margin:0 0 8px;">You're on the list, ${customerName}.</h1>
+            <p style="color:rgba(255,255,255,0.4);margin:0 0 28px;font-size:15px;">Your RSVP for <strong style="color:rgba(255,255,255,0.8);">${eventName}</strong> has been confirmed.</p>
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:20px;margin-bottom:28px;">
+              <p style="margin:0;color:rgba(255,255,255,0.5);font-size:13px;">Show this email at the door for entry. See you there!</p>
+            </div>
+            <p style="color:rgba(255,255,255,0.2);font-size:12px;margin:0;">Questions? Contact us at support@kartis.app</p>
+          </div>
+        `,
+      });
+    } catch (err) {
+      Sentry.captureException(err, { tags: { source: 'external_checkout', step: 'rsvp_email' } });
+    }
+  }
+} else if (sessionId) {
+  // Paid flow — retrieve from Stripe
+  try {
+    const stripe = getStripe();
+    if (stripe) {
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      customerName = session.metadata?.customerName ?? customerName;
+      customerEmail = session.metadata?.customerEmail ?? session.customer_email ?? '';
+      customerPhone = session.metadata?.customerPhone ?? '';
+      eventName = session.metadata?.eventName ?? eventName;
+
+      if (customerEmail) {
+        await transporter.sendMail({
+          from: `"Kartis" <${import.meta.env.SMTP_USER}>`,
+          to: customerEmail,
+          subject: `Your order is confirmed — ${eventName}`,
+          html: `
+            <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#080810;color:#fff;padding:40px;border-radius:16px;border:1px solid rgba(255,255,255,0.06);">
+              <div style="margin-bottom:28px;">
+                <span style="background:rgba(124,58,237,0.15);color:#a78bfa;font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;padding:6px 12px;border-radius:6px;border:1px solid rgba(124,58,237,0.2);">Order Confirmed</span>
+              </div>
+              <h1 style="color:#fff;font-size:28px;font-weight:900;margin:0 0 8px;">You're all set, ${customerName}.</h1>
+              <p style="color:rgba(255,255,255,0.4);margin:0 0 28px;font-size:15px;">Your order for <strong style="color:rgba(255,255,255,0.8);">${eventName}</strong> has been confirmed.</p>
+              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:20px;margin-bottom:28px;">
+                <p style="margin:0;color:rgba(255,255,255,0.5);font-size:13px;">We're processing your tickets. Entry details will be sent to this address shortly.</p>
+              </div>
+              <p style="color:rgba(255,255,255,0.2);font-size:12px;margin:0;">Questions? Contact us at support@kartis.app</p>
+            </div>
+          `,
+        });
+      }
+    }
+  } catch (err) {
+    Sentry.captureException(err, { tags: { source: 'external_checkout', step: 'payment_email' } });
+  }
+}
+
+const steps = isRsvp
+  ? [
+      { label: 'RSVP received' },
+      { label: 'You\'re on the list' },
+      { label: customerEmail ? `Confirmation sent to ${customerEmail}` : 'Confirmation email sent' },
+    ]
+  : [
+      { label: 'Payment received' },
+      { label: 'Order processing' },
+      { label: customerEmail ? `Confirmation sent to ${customerEmail}` : 'Confirmation email sent' },
+    ];
+---
+
+<Base title={`${isRsvp ? 'RSVP' : 'Order'} Confirmed — Kartis`}>
+  <div class="min-h-screen bg-[#080810] relative overflow-hidden flex flex-col items-center justify-center p-4">
+
+    <!-- Background glows -->
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full bg-emerald-500/[0.08] blur-[120px]"></div>
+      <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] rounded-full bg-violet-600/[0.08] blur-[100px]"></div>
+    </div>
+
+    <!-- Grid -->
+    <div class="absolute inset-0 pointer-events-none opacity-[0.025]"
+      style="background-image:linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px);background-size:40px 40px;"></div>
+
+    <div class="relative z-10 w-full max-w-md">
+
+      <!-- Brand -->
+      <div class="flex items-center justify-center mb-10 gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-violet-600/20 ring-1 ring-violet-600/30 flex items-center justify-center">
+          <svg class="w-4 h-4 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        </div>
+        <span class="text-sm font-bold tracking-widest uppercase text-white/40">Kartis</span>
+      </div>
+
+      <!-- Card -->
+      <div class="relative rounded-2xl overflow-hidden"
+        style="background:linear-gradient(160deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.02) 100%);box-shadow:0 0 0 1px rgba(255,255,255,0.06),0 32px 64px rgba(0,0,0,0.5),0 0 80px rgba(16,185,129,0.05);">
+        <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent"></div>
+
+        <div class="p-8 text-center space-y-6">
+
+          <!-- Icon -->
+          <div class="flex justify-center">
+            <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 ring-1 ring-emerald-500/20 flex items-center justify-center">
+              <svg class="w-8 h-8 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Text -->
+          <div class="space-y-2">
+            <h1 class="text-2xl font-black tracking-tight text-white">
+              {isRsvp ? "You're on the list" : "You're confirmed"}
+            </h1>
+            <p class="text-sm text-white/40 leading-relaxed">
+              Hey {customerName}, your {isRsvp ? 'RSVP' : 'order'} for{' '}
+              <span class="text-white/70 font-semibold">{eventName}</span>{' '}
+              is locked in.
+            </p>
+          </div>
+
+          <!-- Steps -->
+          <div class="space-y-2 text-left">
+            {steps.map(({ label }) => (
+              <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.03] ring-1 ring-white/[0.06]">
+                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span class="text-sm text-white/50">{label}</span>
+              </div>
+            ))}
+          </div>
+
+          <!-- CTA -->
+          <a href={`/${locale}`}
+            class="group flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm font-bold text-white/60 ring-1 ring-white/[0.08] hover:ring-white/[0.15] hover:text-white/80 transition-all duration-200">
+            Back to Kartis
+            <svg class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</Base>

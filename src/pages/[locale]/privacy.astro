@@ -1,0 +1,39 @@
+---
+import PageShell from '@/layouts/PageShell.astro';
+const { locale } = Astro.params;
+---
+
+<PageShell locale={locale!} title="Privacy Policy — Kartis">
+  <div class="max-w-2xl mx-auto px-6 py-16">
+    <p class="text-[10px] font-bold uppercase tracking-widest text-white/25 mb-3">Legal</p>
+    <h1 class="text-3xl font-black text-white mb-8">Privacy Policy</h1>
+    <div class="space-y-6 text-[14px] text-white/40 leading-relaxed">
+      <p>Kartis is committed to protecting your personal information. This policy explains how we collect, use, and safeguard your data.</p>
+      <div>
+        <h2 class="text-sm font-bold text-white/70 mb-2">1. Information We Collect</h2>
+        <p>We collect your name, email address, and payment information (processed by Stripe) when you purchase tickets or create an account. We also collect usage data to improve the platform.</p>
+      </div>
+      <div>
+        <h2 class="text-sm font-bold text-white/70 mb-2">2. How We Use Your Data</h2>
+        <p>Your information is used to process orders, send QR tickets, provide customer support, and improve Kartis. We do not sell your data to third parties.</p>
+      </div>
+      <div>
+        <h2 class="text-sm font-bold text-white/70 mb-2">3. Data Sharing</h2>
+        <p>We share data with Stripe for payment processing, and with event organizers as necessary to fulfill your order (e.g., entry lists for check-in).</p>
+      </div>
+      <div>
+        <h2 class="text-sm font-bold text-white/70 mb-2">4. Data Retention</h2>
+        <p>We retain your data as long as your account is active or as required by law. You may request deletion of your data at any time.</p>
+      </div>
+      <div>
+        <h2 class="text-sm font-bold text-white/70 mb-2">5. Your Rights</h2>
+        <p>You have the right to access, correct, or delete your personal data. Contact us to exercise these rights.</p>
+      </div>
+      <div>
+        <h2 class="text-sm font-bold text-white/70 mb-2">6. Cookies</h2>
+        <p>Kartis uses session cookies for authentication. No third-party tracking cookies are used.</p>
+      </div>
+      <p class="text-white/20 text-[12px]">Last updated: March 2026 · Questions? <a href={`/${locale}/contact`} class="text-violet-400 hover:text-violet-300 transition-colors">Contact us</a></p>
+    </div>
+  </div>
+</PageShell>

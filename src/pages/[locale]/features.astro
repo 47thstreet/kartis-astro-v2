@@ -1,0 +1,44 @@
+---
+import PageShell from '../../layouts/PageShell.astro';
+
+const { locale } = Astro.params;
+
+const features = [
+  { icon: "table", title: "Real-time Table Maps",   desc: "Interactive floor plan with live hold timers, per-table status, and zone management. Staff see exactly what's reserved or available." },
+  { icon: "ticket", title: "Ticket QR Passes",      desc: "Every ticket generates a unique QR pass delivered by email. Staff scan and validate in seconds — no app download required." },
+  { icon: "scan", title: "Staff Check-In",           desc: "Fast QR validation at the door with live telemetry. Track attendance as it happens and flag duplicates instantly." },
+  { icon: "users", title: "Promoter Attribution",   desc: "Unique referral links per promoter with click tracking, conversion counts, and tiered commission rules per event." },
+  { icon: "chart", title: "Event Reporting",        desc: "Revenue breakdowns, occupancy metrics, and commission ledger — live dashboard that updates as orders come in." },
+  { icon: "zap", title: "Stripe Checkout",          desc: "PCI-compliant payments. Tickets, table deposits, and multi-item orders handled in one seamless checkout flow." },
+];
+
+/* Lucide-style SVG paths for each icon name */
+const iconSvgs: Record<string, string> = {
+  table: '<rect x="1" y="5" width="22" height="14" rx="2"/><line x1="6" y1="5" x2="6" y2="19"/><line x1="18" y1="5" x2="18" y2="19"/><line x1="1" y1="12" x2="23" y2="12"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
+  scan: '<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  chart: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  zap: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+};
+---
+<PageShell locale={locale} title="Features — KARTIS">
+  <div class="max-w-5xl mx-auto px-6 py-16">
+    <div class="mb-14 space-y-3">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/25">Platform</p>
+      <h1 class="text-4xl font-black tracking-tight text-white">Features</h1>
+      <p class="text-sm text-white/35 max-w-md leading-relaxed">Everything a modern nightlife venue needs — built into one stack.</p>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {features.map(({ icon, title, desc }) => (
+        <div class="rounded-2xl p-5" style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
+          <div class="w-9 h-9 rounded-xl bg-violet-500/10 ring-1 ring-violet-500/20 flex items-center justify-center mb-4">
+            <svg class="w-4 h-4 text-violet-400/70" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" set:html={iconSvgs[icon] || ''} />
+          </div>
+          <p class="text-sm font-bold text-white/80 mb-1.5">{title}</p>
+          <p class="text-[12px] text-white/30 leading-relaxed">{desc}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</PageShell>

@@ -1,0 +1,196 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { prisma } from '../../../lib/prisma';
+
+const { slug } = Astro.params;
+
+const site = await prisma.promoterSite.findUnique({
+  where: { slug },
+  include: {
+    promoter: {
+      include: {
+        links: {
+          include: { event: { include: { venue: true } } },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
+      },
+    },
+  },
+});
+
+if (!site || !site.isPublished) return Astro.redirect('/');
+
+const promoter = site.promoter;
+const socialLinks: Record<string, string> = (site.socialLinks as any) || {};
+const upcomingEvents = promoter.links
+  .filter(l => l.event.startsAt > new Date())
+  .map(l => ({ ...l.event, promoCode: l.code }));
+---
+
+<Base title={`${promoter.displayName} | Kartis`}>
+  <main style={`--primary: ${site.primaryColor}; --accent: ${site.accentColor};`}>
+    <!-- Animated background orbs -->
+    <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      <div class="bg-orb orb-1"></div>
+      <div class="bg-orb orb-2"></div>
+      <div class="bg-orb orb-3"></div>
+      <div class="bg-orb orb-4"></div>
+    </div>
+
+    <!-- Hero -->
+    <section class="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
+      {site.heroImage && (
+        <div class="absolute inset-0">
+          <img src={site.heroImage} alt="" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-black/60"></div>
+        </div>
+      )}
+      <div class="relative z-10 text-center px-6 py-20">
+        {site.logoImage && (
+          <img src={site.logoImage} alt={promoter.displayName} class="w-24 h-24 rounded-full mx-auto mb-6 border-2 object-cover" style={`border-color: ${site.primaryColor}`} />
+        )}
+        <h1 class="glitch-name text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white mb-4 uppercase" data-text={promoter.displayName.toUpperCase()}>{promoter.displayName.toUpperCase()}</h1>
+        {site.tagline && <p class="text-lg text-white/70 max-w-lg mx-auto">{site.tagline}</p>}
+      </div>
+    </section>
+
+    <!-- Bio -->
+    {site.bio && (
+      <section class="max-w-3xl mx-auto px-6 py-16">
+        <p class="text-lg text-neutral-300 leading-relaxed">{site.bio}</p>
+      </section>
+    )}
+
+    <!-- Upcoming Events -->
+    {upcomingEvents.length > 0 && (
+      <section class="max-w-5xl mx-auto px-6 py-16">
+        <h2 class="text-2xl font-bold mb-8 text-white">Upcoming Events</h2>
+        <div class="grid md:grid-cols-2 gap-6">
+          {upcomingEvents.map((event) => (
+            <a href={`/${Astro.params.locale}/event/${event.slug}?ref=${event.promoCode}`}
+              class="block bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden hover:border-neutral-600 transition-colors">
+              {event.flyerImage && (
+                <img src={event.flyerImage} alt={event.name} class="w-full h-48 object-cover" />
+              )}
+              <div class="p-6">
+                <h3 class="text-lg font-semibold text-white mb-2">{event.name}</h3>
+                <p class="text-sm text-neutral-400">
+                  {event.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  {' '}&middot;{' '}{event.venue.name}
+                </p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Social Links -->
+    {Object.keys(socialLinks).length > 0 && (
+      <section class="max-w-3xl mx-auto px-6 py-16 text-center">
+        <div class="flex gap-4 justify-center flex-wrap">
+          {Object.entries(socialLinks).map(([platform, url]) => (
+            <a href={url} target="_blank" rel="noopener"
+              class="px-6 py-3 border rounded-lg text-sm font-medium transition-colors hover:bg-white/5"
+              style={`border-color: ${site.primaryColor}40; color: ${site.primaryColor}`}>
+              {platform}
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Footer -->
+    <footer class="text-center py-12 text-neutral-500 text-sm border-t border-neutral-800">
+      <p>Powered by <a href={`/${Astro.params.locale}/`} class="hover:text-white transition-colors">Kartis</a></p>
+    </footer>
+  </main>
+
+  <style define:vars={{ primary: site.primaryColor, accent: site.accentColor }}>
+    /* Animated background orbs - dramatic vertical drift, slow & elegant */
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.35;
+    }
+
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: var(--primary);
+      left: -10%;
+      animation: orbDrift1 10s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: var(--accent);
+      right: -5%;
+      animation: orbDrift2 12s ease-in-out infinite;
+    }
+    .orb-3 {
+      width: 350px; height: 350px;
+      background: var(--primary);
+      left: 40%;
+      animation: orbDrift3 14s ease-in-out infinite;
+    }
+    .orb-4 {
+      width: 300px; height: 300px;
+      background: var(--accent);
+      left: 60%;
+      animation: orbDrift4 11s ease-in-out infinite;
+    }
+
+    @keyframes orbDrift1 {
+      0%, 100% { top: -15%; opacity: 0.35; }
+      50% { top: 65%; opacity: 0.2; }
+    }
+    @keyframes orbDrift2 {
+      0%, 100% { top: 70%; opacity: 0.3; }
+      50% { top: -10%; opacity: 0.18; }
+    }
+    @keyframes orbDrift3 {
+      0%, 100% { top: 50%; opacity: 0.25; }
+      50% { top: -20%; opacity: 0.15; }
+    }
+    @keyframes orbDrift4 {
+      0%, 100% { top: -20%; opacity: 0.2; }
+      50% { top: 80%; opacity: 0.3; }
+    }
+
+    /* Glitch effect on name */
+    .glitch-name {
+      position: relative;
+    }
+    .glitch-name::before,
+    .glitch-name::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+    }
+    .glitch-name::before {
+      color: var(--accent);
+      animation: glitch1 5s ease-in-out infinite;
+    }
+    .glitch-name::after {
+      color: var(--primary);
+      animation: glitch2 5s ease-in-out infinite;
+    }
+
+    @keyframes glitch1 {
+      0%, 88%, 92%, 100% { opacity: 0; transform: translate(0); }
+      89% { opacity: 0.8; transform: translate(-3px, -1px); }
+      91% { opacity: 0.6; transform: translate(2px, 1px); }
+    }
+    @keyframes glitch2 {
+      0%, 86%, 94%, 100% { opacity: 0; transform: translate(0); }
+      87% { opacity: 0.7; transform: translate(3px, 1px); }
+      90% { opacity: 0; }
+      93% { opacity: 0.5; transform: translate(-2px, -1px); }
+    }
+  </style>
+</Base>

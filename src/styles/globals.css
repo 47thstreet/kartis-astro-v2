@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 232 31% 7%;
+  --foreground: 220 20% 95%;
+  --card: 230 28% 10%;
+  --primary: 252 83% 65%;
+  --muted: 230 20% 20%;
+  --border: 230 20% 22%;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+  background-image:
+    radial-gradient(circle at 10% 10%, rgba(124, 58, 237, 0.28), transparent 35%),
+    radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.22), transparent 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 22%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  input,
+  textarea,
+  select,
+  button,
+  a {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply border border-white/10 bg-white/5 backdrop-blur-xl;
+  }
+
+  .soft-grid {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 26px 26px;
+    mask-image: radial-gradient(circle at 50% 20%, black, transparent 70%);
+  }
+
+  .animate-float {
+    animation: floatY 6s ease-in-out infinite;
+  }
+}
+
+@keyframes floatY {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
