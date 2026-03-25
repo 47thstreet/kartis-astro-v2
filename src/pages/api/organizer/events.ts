@@ -107,5 +107,28 @@ export const POST: APIRoute = async ({ request }) => {
     payload: { name: event.name, venueId: data.venueId },
   });
 
+  // Fire-and-forget: notify TBM (marketing platform) about the new event
+  const tbmWebhookUrl = import.meta.env.TBM_WEBHOOK_URL;
+  if (tbmWebhookUrl) {
+    try {
+      fetch(`${tbmWebhookUrl}/api/webhook/event-published`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: event.id,
+          name: event.name,
+          date: data.startsAt,
+          venue: venue.name,
+          city: venue.city ?? '',
+        }),
+        signal: AbortSignal.timeout(5000),
+      }).catch((err) => {
+        console.warn('[events] TBM webhook failed (non-blocking):', err);
+      });
+    } catch (err) {
+      console.warn('[events] TBM webhook dispatch error (non-blocking):', err);
+    }
+  }
+
   return new Response(JSON.stringify({ data: event }), { status: 201, headers: JSON_HEADERS });
 };
