@@ -3,10 +3,21 @@ import Base from '../../layouts/Base.astro';
 import LandingPage from '../../components/LandingPage';
 
 const { locale } = Astro.params;
+
+const features = [
+  { label: "Stripe Checkout", sub: "Tickets & table deposits in one flow", icon: "ticket" },
+  { label: "Live Table Maps", sub: "Real-time floor plan with hold timers", icon: "table" },
+  { label: "Promoter Network", sub: "Attribution, tiers & commission ledger", icon: "users" },
+  { label: "Fast Check-in", sub: "QR scan with telemetry dashboard", icon: "scan" },
+  { label: "Event Analytics", sub: "Revenue, capacity & conversion metrics", icon: "chart" },
+  { label: "Growth Engine", sub: "Promoter links drive measurable sales", icon: "trending" },
+];
 ---
 <Base title="KARTIS APP">
-  <!-- SSR fallback: visible immediately, replaced once React hydrates -->
-  <div id="landing-fallback" class="min-h-screen bg-[#05050a] text-white">
+  <!-- Static above-the-fold content: renders immediately without JS -->
+  <div class="min-h-screen bg-[#05050a] text-white selection:bg-violet-500/30 overflow-x-hidden">
+
+    <!-- Nav -->
     <header class="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 py-4 backdrop-blur-xl border-b border-white/[0.04]" style="background: rgba(5,5,10,0.75)">
       <div class="flex items-center gap-2.5">
         <div class="w-7 h-7 rounded-lg bg-violet-500/20 ring-1 ring-violet-500/30 flex items-center justify-center">
@@ -23,19 +34,39 @@ const { locale } = Astro.params;
       <a href={`/${locale}/contact`} class="px-4 py-2 rounded-lg text-[13px] font-semibold text-white ring-1 ring-white/10 bg-white/[0.04] hover:bg-white/[0.08] transition-colors">Get access</a>
     </header>
 
-    <section class="flex flex-col items-center justify-center min-h-screen px-6 pt-24 pb-16">
+    <!-- Hero -->
+    <section class="relative flex flex-col items-center justify-center min-h-screen px-6 pt-24 pb-16 overflow-hidden">
+      <!-- Background orbs (static, CSS-only) -->
+      <div class="pointer-events-none absolute rounded-full" style="width:600px;height:600px;left:20%;top:10%;background:radial-gradient(ellipse at center, rgba(124,58,237,0.13) 0%, transparent 70%);filter:blur(40px);transform:translate(-50%,-50%)"></div>
+      <div class="pointer-events-none absolute rounded-full" style="width:400px;height:400px;left:70%;top:60%;background:radial-gradient(ellipse at center, rgba(99,102,241,0.09) 0%, transparent 70%);filter:blur(40px);transform:translate(-50%,-50%)"></div>
+      <div class="pointer-events-none absolute rounded-full" style="width:300px;height:300px;left:10%;top:70%;background:radial-gradient(ellipse at center, rgba(14,165,233,0.08) 0%, transparent 70%);filter:blur(40px);transform:translate(-50%,-50%)"></div>
+      <div class="pointer-events-none absolute rounded-full" style="width:250px;height:250px;left:80%;top:5%;background:radial-gradient(ellipse at center, rgba(167,139,250,0.07) 0%, transparent 70%);filter:blur(40px);transform:translate(-50%,-50%)"></div>
+
+      <!-- Primary orb -->
+      <div class="pointer-events-none absolute top-[-15%] left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full" style="background:radial-gradient(ellipse at center, rgba(124,58,237,0.15) 0%, transparent 65%)"></div>
+
+      <!-- Fine grid -->
+      <div class="pointer-events-none absolute inset-0 opacity-[0.02]" style="background-image:linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px);background-size:48px 48px"></div>
+
+      <!-- Badge -->
       <div class="mb-7 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full ring-1 ring-violet-400/20 bg-violet-500/[0.08] text-[11px] font-semibold tracking-widest uppercase text-violet-300/70">
         <span class="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse"></span>
         2026 nightlife operating system
       </div>
+
+      <!-- Headline -->
       <h1 class="max-w-3xl text-center text-5xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.05]">
         <span class="text-white">Sell out every</span><br />
         <span class="bg-clip-text text-transparent" style="background-image: linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #38bdf8 100%)">night.</span>
       </h1>
+
+      <!-- Sub -->
       <p class="mt-5 max-w-lg text-center text-[15px] text-white/35 leading-relaxed">
         Real-time table maps, Stripe checkout, promoter attribution,
         and QR check-ins — one stack for the whole night.
       </p>
+
+      <!-- CTAs -->
       <div class="mt-9 flex items-center gap-3">
         <a href={`/${locale}/contact`} class="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white" style="background: linear-gradient(135deg, hsl(262 83% 60%), hsl(252 83% 55%))">
           Book a demo
@@ -45,25 +76,52 @@ const { locale } = Astro.params;
           Browse events
         </a>
       </div>
+
+      <!-- Scroll indicator -->
+      <div class="absolute bottom-10 flex flex-col items-center gap-1">
+        <div class="w-px h-10 bg-gradient-to-b from-transparent to-white/15"></div>
+      </div>
     </section>
+
+    <!-- Features grid (static) -->
+    <section class="relative px-6 pb-32 max-w-5xl mx-auto">
+      <p class="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white/20 mb-10">
+        Everything your venue needs
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {features.map(({ label, sub }) => (
+          <div class="group relative rounded-2xl p-5 cursor-default overflow-hidden" style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
+            <div class="relative z-10">
+              <div class="w-9 h-9 rounded-xl bg-white/[0.04] ring-1 ring-white/8 flex items-center justify-center mb-4 group-hover:ring-violet-500/30 group-hover:bg-violet-500/[0.08] transition-all duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/40 group-hover:text-violet-400 transition-colors duration-300"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+              </div>
+              <p class="text-sm font-bold text-white/80 mb-1">{label}</p>
+              <p class="text-[12px] text-white/30 leading-relaxed">{sub}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Bottom CTA (static) -->
+    <section class="relative mx-6 mb-20 max-w-5xl lg:mx-auto rounded-2xl overflow-hidden px-8 py-12 text-center" style="background: linear-gradient(135deg, rgba(124,58,237,0.12) 0%, rgba(99,102,241,0.06) 100%); box-shadow: 0 0 0 1px rgba(124,58,237,0.15), 0 0 80px rgba(124,58,237,0.05)">
+      <div class="pointer-events-none absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-400/30 to-transparent"></div>
+      <h2 class="text-2xl sm:text-3xl font-black text-white mb-3">Ready to run the night?</h2>
+      <p class="text-sm text-white/35 mb-7 max-w-sm mx-auto">Get Kartis set up for your venue in under a day.</p>
+      <a href={`/${locale}/contact`} class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-sm font-bold text-white" style="background: linear-gradient(135deg, hsl(262 83% 60%), hsl(252 83% 55%))">
+        Get started
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/[0.04] px-6 py-6 flex items-center justify-between max-w-5xl mx-auto">
+      <span class="text-[11px] font-black tracking-[0.2em] uppercase text-white/15">KARTIS APP</span>
+      <span class="text-[11px] text-white/15">© 2026</span>
+    </footer>
   </div>
 
-  <div id="landing-hydrated" style="display:none;">
-    <LandingPage locale={locale} client:load />
-  </div>
-
-  <script>
-    // Once React hydrates, hide fallback and show the interactive version
-    const observer = new MutationObserver(() => {
-      const hydrated = document.getElementById('landing-hydrated');
-      if (hydrated && hydrated.children.length > 0 && hydrated.children[0].children.length > 0) {
-        const fallback = document.getElementById('landing-fallback');
-        if (fallback) fallback.style.display = 'none';
-        hydrated.style.display = '';
-        observer.disconnect();
-      }
-    });
-    const target = document.getElementById('landing-hydrated');
-    if (target) observer.observe(target, { childList: true, subtree: true });
-  </script>
+  <!-- Interactive enhancements: cursor glow + framer-motion animations load after -->
+  <LandingPage locale={locale!} client:visible />
 </Base>

@@ -1,6 +1,6 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
-import tailwind from '@astrojs/tailwind';
+import tailwindcss from '@tailwindcss/vite';
 import vercel from '@astrojs/vercel';
 import auth from 'auth-astro';
 import sentry from '@sentry/astro';
@@ -14,7 +14,6 @@ export default defineConfig({
   adapter: vercel(),
   integrations: [
     react(),
-    tailwind({ applyBaseStyles: false }),
     auth(),
     sentry({
       dsn: process.env.SENTRY_DSN,
@@ -23,6 +22,7 @@ export default defineConfig({
     }),
   ],
   vite: {
+    plugins: [tailwindcss()],
     resolve: {
       alias: {
         '@': resolve(__dirname, './src'),

@@ -1,6 +1,18 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@theme {
+  --color-background: hsl(232 31% 7%);
+  --color-foreground: hsl(220 20% 95%);
+  --color-card: hsl(230 28% 10%);
+  --color-primary: hsl(252 83% 65%);
+  --color-muted: hsl(230 20% 20%);
+  --color-border: hsl(230 20% 22%);
+
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+
+  --shadow-glass: 0 8px 30px rgba(0, 0, 0, 0.22);
+}
 
 :root {
   --background: 232 31% 7%;
