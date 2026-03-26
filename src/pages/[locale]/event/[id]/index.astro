@@ -92,7 +92,7 @@ const tableDisplay = event.tablePackages.map((t: any) => ({
 
         {hasFlyer ? (
           <div class="relative">
-            <img src={event.flyerImage!} alt={event.name} class="w-full aspect-[3/4] sm:aspect-[16/9] object-cover" />
+            <img src={event.flyerImage!} alt={event.name} class="w-full aspect-[3/4] sm:aspect-[16/9] object-cover" fetchpriority="high" decoding="async" />
             <div class="absolute inset-0 bg-gradient-to-t from-[#05050a] via-transparent to-transparent"></div>
             <div class="absolute top-4 left-5 z-10">
               <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest backdrop-blur-md"

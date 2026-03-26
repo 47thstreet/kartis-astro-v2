@@ -11,7 +11,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   output: 'server',
-  adapter: vercel(),
+  adapter: vercel({
+    imageService: true,
+    imagesConfig: {
+      sizes: [640, 828, 1200],
+      formats: ['image/avif', 'image/webp'],
+    },
+  }),
   integrations: [
     react(),
     auth(),
