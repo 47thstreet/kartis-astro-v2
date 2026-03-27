@@ -1,0 +1,28 @@
+---
+interface Props {
+  icon: string;
+  iconColor?: string;
+  title: string;
+  description: string;
+  actionLabel?: string;
+  actionHref?: string;
+}
+
+const { icon, iconColor = 'rgba(139,92,246,0.7)', title, description, actionLabel, actionHref } = Astro.props;
+---
+<div class="rounded-2xl p-12 text-center" style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
+  <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl"
+    style="background: rgba(139,92,246,0.08); box-shadow: 0 0 0 1px rgba(139,92,246,0.15)">
+    <svg class="w-6 h-6" style={`color: ${iconColor}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <Fragment set:html={icon} />
+    </svg>
+  </div>
+  <p class="text-sm font-bold text-white/50">{title}</p>
+  <p class="mt-1.5 text-[12px] leading-relaxed text-white/25 max-w-xs mx-auto">{description}</p>
+  {actionLabel && actionHref && (
+    <a href={actionHref}
+      class="mt-5 inline-flex h-9 items-center gap-2 rounded-xl bg-violet-600 px-5 text-[13px] font-semibold text-white hover:bg-violet-500 transition-colors">
+      {actionLabel}
+    </a>
+  )}
+</div>

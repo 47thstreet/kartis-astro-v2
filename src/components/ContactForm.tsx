@@ -2,18 +2,32 @@
 
 import { useState } from 'react';
 import { Loader2, ArrowRight, User, Mail, Building2, MessageSquare } from 'lucide-react';
+import { validateContact, type FieldError } from '../lib/validate';
 
 export default function ContactForm() {
   const [ok, setOk] = useState(false);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
+
+  const fieldError = (field: string) => fieldErrors.find(e => e.field === field)?.message;
+  const hasFieldError = (field: string) => fieldErrors.some(e => e.field === field);
+  const clearFieldError = (field: string) => setFieldErrors(f => f.filter(x => x.field !== field));
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
     setError(false);
     const form = new FormData(e.currentTarget);
+    const name = (form.get('name') as string) || '';
+    const email = (form.get('email') as string) || '';
+    const message = (form.get('message') as string) || '';
+
+    const errors = validateContact(name, email, message);
+    setFieldErrors(errors);
+    if (errors.length > 0) return;
+
+    setLoading(true);
     try {
       const res = await fetch('/api/demo', {
         method: 'POST',
@@ -44,22 +58,26 @@ export default function ContactForm() {
         {fields.map(({ id, label, type, Icon, autoComplete, placeholder }) => (
           <div key={id} className="space-y-1.5">
             <label htmlFor={id} className="text-[11px] font-semibold uppercase tracking-widest text-white/30">{label}</label>
-            <div className={`relative rounded-xl ring-1 transition-all duration-200 ${focused === id ? 'ring-violet-500/50 shadow-[0_0_20px_rgba(124,58,237,0.1)]' : 'ring-white/[0.06]'}`}>
-              <Icon className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${focused === id ? 'text-violet-400/70' : 'text-white/20'}`} />
-              <input id={id} name={id} type={type} required autoComplete={autoComplete} placeholder={placeholder}
+            <div className={`relative rounded-xl ring-1 transition-all duration-200 ${hasFieldError(id) ? 'ring-red-500/40' : focused === id ? 'ring-violet-500/50 shadow-[0_0_20px_rgba(124,58,237,0.1)]' : 'ring-white/[0.06]'}`}>
+              <Icon className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${hasFieldError(id) ? 'text-red-400/70' : focused === id ? 'text-violet-400/70' : 'text-white/20'}`} />
+              <input id={id} name={id} type={type} autoComplete={autoComplete} placeholder={placeholder}
                 onFocus={() => setFocused(id)} onBlur={() => setFocused(null)}
+                onChange={() => clearFieldError(id)}
                 className="w-full bg-transparent py-3 pl-10 pr-4 text-sm text-white/80 placeholder:text-white/20 outline-none rounded-xl" />
             </div>
+            {fieldError(id) && <p className="text-[11px] text-red-400/80">{fieldError(id)}</p>}
           </div>
         ))}
         <div className="space-y-1.5">
           <label htmlFor="message" className="text-[11px] font-semibold uppercase tracking-widest text-white/30">Message</label>
-          <div className={`relative rounded-xl ring-1 transition-all duration-200 ${focused === 'message' ? 'ring-violet-500/50 shadow-[0_0_20px_rgba(124,58,237,0.1)]' : 'ring-white/[0.06]'}`}>
-            <MessageSquare className={`absolute left-3.5 top-3.5 w-4 h-4 transition-colors duration-200 ${focused === 'message' ? 'text-violet-400/70' : 'text-white/20'}`} />
+          <div className={`relative rounded-xl ring-1 transition-all duration-200 ${hasFieldError('message') ? 'ring-red-500/40' : focused === 'message' ? 'ring-violet-500/50 shadow-[0_0_20px_rgba(124,58,237,0.1)]' : 'ring-white/[0.06]'}`}>
+            <MessageSquare className={`absolute left-3.5 top-3.5 w-4 h-4 transition-colors duration-200 ${hasFieldError('message') ? 'text-red-400/70' : focused === 'message' ? 'text-violet-400/70' : 'text-white/20'}`} />
             <textarea id="message" name="message" rows={4} placeholder="Tell us about your venue..."
               onFocus={() => setFocused('message')} onBlur={() => setFocused(null)}
+              onChange={() => clearFieldError('message')}
               className="w-full bg-transparent py-3 pl-10 pr-4 text-sm text-white/80 placeholder:text-white/20 outline-none rounded-xl resize-none" />
           </div>
+          {fieldError('message') && <p className="text-[11px] text-red-400/80">{fieldError('message')}</p>}
         </div>
         <button type="submit" disabled={loading}
           className="group relative w-full overflow-hidden flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-white mt-2 disabled:opacity-50"

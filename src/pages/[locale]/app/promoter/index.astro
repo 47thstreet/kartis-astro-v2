@@ -1,5 +1,6 @@
 ---
 import AppShell from '../../../../layouts/AppShell.astro';
+import EmptyState from '../../../../components/ui/EmptyState.astro';
 import { getSession } from 'auth-astro/server';
 import { prisma } from '../../../../lib/prisma';
 
@@ -28,10 +29,12 @@ const owed = promoter?.ledgers
     </div>
 
     {!promoter ? (
-      <div class="rounded-2xl p-10 text-center" style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
-        <p class="text-sm font-bold text-white/40">No promoter profile yet</p>
-        <p class="text-[12px] text-white/20 mt-1">Ask an organizer to connect your promoter account.</p>
-      </div>
+      <EmptyState
+        icon='<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'
+        iconColor="rgba(251,146,60,0.7)"
+        title="No promoter profile yet"
+        description="Ask an organizer to connect your promoter account. Once linked, you'll see your referral links, commissions, and payouts here."
+      />
     ) : (
       <>
         <div class="rounded-2xl p-5 flex items-center gap-4" style="background: rgba(124,58,237,0.08); box-shadow: 0 0 0 1px rgba(124,58,237,0.15)">
@@ -47,7 +50,12 @@ const owed = promoter?.ledgers
         <div class="space-y-3">
           <p class="text-[11px] font-semibold uppercase tracking-[0.15em] text-white/25">Active Links</p>
           {promoter.links.length === 0 ? (
-            <p class="text-sm text-white/30">No active links yet.</p>
+            <EmptyState
+              icon='<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'
+              iconColor="rgba(56,189,248,0.7)"
+              title="No active links yet"
+              description="Your referral links will appear here once an organizer creates them for upcoming events."
+            />
           ) : (
             <div class="space-y-2">
               {promoter.links.map((link: any) => (

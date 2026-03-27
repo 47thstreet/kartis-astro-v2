@@ -1,5 +1,6 @@
 ---
 import PageShell from '../../../layouts/PageShell.astro';
+import EmptyState from '../../../components/ui/EmptyState.astro';
 import { prisma } from '../../../lib/prisma';
 
 const { locale } = Astro.params;
@@ -13,9 +14,12 @@ const venues = await prisma.venue.findMany({ include: { events: true }, orderBy:
     </div>
 
     {venues.length === 0 ? (
-      <div class="rounded-2xl p-10 text-center" style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
-        <p class="text-sm font-bold text-white/40">No venues yet</p>
-      </div>
+      <EmptyState
+        icon='<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>'
+        iconColor="rgba(244,114,182,0.7)"
+        title="No venues yet"
+        description="Venues will appear here as organizers add locations for their events."
+      />
     ) : (
       <div class="grid gap-3 sm:grid-cols-2">
         {venues.map((venue: any) => (

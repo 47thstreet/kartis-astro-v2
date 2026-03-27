@@ -1,19 +1,28 @@
 'use client';
 
 import { useState } from 'react';
+import { validateCreateEvent, type FieldError } from '../../lib/validate';
 
 type Venue = { id: string; name: string };
 
 export default function CreateEventForm({ venues, locale }: { venues: Venue[]; locale: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
+
+  const fieldError = (field: string) => fieldErrors.find(e => e.field === field)?.message;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmitting(true);
     setError('');
 
     const fd = new FormData(e.currentTarget);
+
+    const errors = validateCreateEvent(fd);
+    setFieldErrors(errors);
+    if (errors.length > 0) return;
+
+    setSubmitting(true);
 
     const startsAt = fd.get('startsAt') as string;
     const endsAt = fd.get('endsAt') as string;
@@ -80,7 +89,9 @@ export default function CreateEventForm({ venues, locale }: { venues: Venue[]; l
       <div className="space-y-4">
         <div>
           <label className={labelClass}>Event Name *</label>
-          <input name="name" required placeholder="e.g. Friday Night Live" className={inputClass} />
+          <input name="name" required placeholder="e.g. Friday Night Live" className={`${inputClass} ${fieldError('name') ? 'border-red-500/40' : ''}`}
+            onChange={() => setFieldErrors(f => f.filter(x => x.field !== 'name'))} />
+          {fieldError('name') && <p className="text-[11px] text-red-400/80 mt-1">{fieldError('name')}</p>}
         </div>
 
         <div>
@@ -102,7 +113,8 @@ export default function CreateEventForm({ venues, locale }: { venues: Venue[]; l
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className={labelClass}>Venue *</label>
-            <select name="venueId" required className={inputClass}>
+            <select name="venueId" required className={`${inputClass} ${fieldError('venueId') ? 'border-red-500/40' : ''}`}
+              onChange={() => setFieldErrors(f => f.filter(x => x.field !== 'venueId'))}>
               <option value="">Select venue</option>
               {venues.map((v) => (
                 <option key={v.id} value={v.id}>
@@ -110,21 +122,28 @@ export default function CreateEventForm({ venues, locale }: { venues: Venue[]; l
                 </option>
               ))}
             </select>
+            {fieldError('venueId') && <p className="text-[11px] text-red-400/80 mt-1">{fieldError('venueId')}</p>}
           </div>
           <div>
             <label className={labelClass}>Capacity *</label>
-            <input name="capacity" type="number" required min={1} placeholder="500" className={inputClass} />
+            <input name="capacity" type="number" required min={1} placeholder="500" className={`${inputClass} ${fieldError('capacity') ? 'border-red-500/40' : ''}`}
+              onChange={() => setFieldErrors(f => f.filter(x => x.field !== 'capacity'))} />
+            {fieldError('capacity') && <p className="text-[11px] text-red-400/80 mt-1">{fieldError('capacity')}</p>}
           </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className={labelClass}>Starts At *</label>
-            <input name="startsAt" type="datetime-local" required className={inputClass} />
+            <input name="startsAt" type="datetime-local" required className={`${inputClass} ${fieldError('startsAt') ? 'border-red-500/40' : ''}`}
+              onChange={() => setFieldErrors(f => f.filter(x => x.field !== 'startsAt'))} />
+            {fieldError('startsAt') && <p className="text-[11px] text-red-400/80 mt-1">{fieldError('startsAt')}</p>}
           </div>
           <div>
             <label className={labelClass}>Ends At *</label>
-            <input name="endsAt" type="datetime-local" required className={inputClass} />
+            <input name="endsAt" type="datetime-local" required className={`${inputClass} ${fieldError('endsAt') ? 'border-red-500/40' : ''}`}
+              onChange={() => setFieldErrors(f => f.filter(x => x.field !== 'endsAt'))} />
+            {fieldError('endsAt') && <p className="text-[11px] text-red-400/80 mt-1">{fieldError('endsAt')}</p>}
           </div>
         </div>
 

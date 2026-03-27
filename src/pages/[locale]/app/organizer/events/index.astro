@@ -1,5 +1,6 @@
 ---
 import AppShell from '../../../../../layouts/AppShell.astro';
+import EmptyState from '../../../../../components/ui/EmptyState.astro';
 import { getSession } from 'auth-astro/server';
 import { prisma } from '../../../../../lib/prisma';
 
@@ -30,10 +31,14 @@ const events = await prisma.event.findMany({
     </div>
 
     {events.length === 0 ? (
-      <div class="rounded-2xl p-10 text-center" style="background: rgba(255,255,255,0.02); box-shadow: 0 0 0 1px rgba(255,255,255,0.05)">
-        <p class="text-sm font-bold text-white/40">No events created</p>
-        <p class="text-[12px] text-white/20 mt-1">Create your first event to unlock live operations and map tools.</p>
-      </div>
+      <EmptyState
+        icon='<path d="M12 5v14"/><path d="M5 12h14"/>'
+        iconColor="rgba(52,211,153,0.7)"
+        title="No events created yet"
+        description="Create your first event to start selling tickets, manage check-ins, and access live dashboards."
+        actionLabel="Create Event"
+        actionHref={`/${locale}/app/organizer/events/new`}
+      />
     ) : (
       <div class="space-y-2">
         {events.map((event: any) => (

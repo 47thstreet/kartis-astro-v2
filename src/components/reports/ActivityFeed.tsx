@@ -65,9 +65,17 @@ export default function ActivityFeed() {
 
   if (logs.length === 0) {
     return (
-      <div className="rounded-2xl p-10 text-center" style={{ background: 'rgba(255,255,255,0.02)', boxShadow: '0 0 0 1px rgba(255,255,255,0.05)' }}>
-        <p className="text-sm font-bold text-white/40">No activity yet</p>
-        <p className="text-[12px] text-white/20 mt-1">Actions like order payments and event creation will appear here.</p>
+      <div className="rounded-2xl p-12 text-center" style={{ background: 'rgba(255,255,255,0.02)', boxShadow: '0 0 0 1px rgba(255,255,255,0.05)' }}>
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl"
+          style={{ background: 'rgba(139,92,246,0.08)', boxShadow: '0 0 0 1px rgba(139,92,246,0.15)' }}>
+          <svg className="w-6 h-6" style={{ color: 'rgba(139,92,246,0.7)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M12 8v4l3 3" /><circle cx="12" cy="12" r="10" />
+          </svg>
+        </div>
+        <p className="text-sm font-bold text-white/50">No activity yet</p>
+        <p className="mt-1.5 text-[12px] leading-relaxed text-white/25 max-w-xs mx-auto">
+          Actions like ticket purchases, event creation, and payouts will appear here as they happen.
+        </p>
       </div>
     );
   }

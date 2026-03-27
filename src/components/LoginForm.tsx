@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
+import { validateLogin, type FieldError } from "../lib/validate";
 
 interface LoginFormProps {
   callbackUrl?: string;
@@ -12,10 +13,19 @@ export default function LoginForm({ callbackUrl = "/" }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
   const [focused, setFocused]   = useState<string | null>(null);
+
+  const fieldError = (field: string) => fieldErrors.find(e => e.field === field)?.message;
+  const hasFieldError = (field: string) => fieldErrors.some(e => e.field === field);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const errors = validateLogin(email, password);
+    setFieldErrors(errors);
+    if (errors.length > 0) return;
+
     setLoading(true);
     setError(null);
 
@@ -56,29 +66,31 @@ export default function LoginForm({ callbackUrl = "/" }: LoginFormProps) {
       {/* Email */}
       <div className="space-y-1.5">
         <label htmlFor="email" className="text-[11px] font-bold uppercase tracking-widest text-white/30">Email</label>
-        <div className={`relative rounded-xl ring-1 transition-all duration-200 ${focused === "email" ? "ring-violet-500/50 shadow-[0_0_20px_rgba(124,58,237,0.1)]" : "ring-white/[0.06]"}`}>
-          <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${focused === "email" ? "text-violet-400/70" : "text-white/20"}`} />
+        <div className={`relative rounded-xl ring-1 transition-all duration-200 ${hasFieldError("email") ? "ring-red-500/40" : focused === "email" ? "ring-violet-500/50 shadow-[0_0_20px_rgba(124,58,237,0.1)]" : "ring-white/[0.06]"}`}>
+          <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${hasFieldError("email") ? "text-red-400/70" : focused === "email" ? "text-violet-400/70" : "text-white/20"}`} />
           <input
-            id="email" type="email" required autoComplete="email" placeholder="you@example.com"
-            value={email} onChange={e => setEmail(e.target.value)}
+            id="email" type="email" autoComplete="email" placeholder="you@example.com"
+            value={email} onChange={e => { setEmail(e.target.value); setFieldErrors(f => f.filter(x => x.field !== "email")); }}
             onFocus={() => setFocused("email")} onBlur={() => setFocused(null)}
             className="w-full bg-transparent py-3 pl-10 pr-4 text-sm text-white/80 placeholder:text-white/20 outline-none rounded-xl"
           />
         </div>
+        {fieldError("email") && <p className="text-[11px] text-red-400/80">{fieldError("email")}</p>}
       </div>
 
       {/* Password */}
       <div className="space-y-1.5">
         <label htmlFor="password" className="text-[11px] font-bold uppercase tracking-widest text-white/30">Password</label>
-        <div className={`relative rounded-xl ring-1 transition-all duration-200 ${focused === "password" ? "ring-violet-500/50 shadow-[0_0_20px_rgba(124,58,237,0.1)]" : "ring-white/[0.06]"}`}>
-          <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${focused === "password" ? "text-violet-400/70" : "text-white/20"}`} />
+        <div className={`relative rounded-xl ring-1 transition-all duration-200 ${hasFieldError("password") ? "ring-red-500/40" : focused === "password" ? "ring-violet-500/50 shadow-[0_0_20px_rgba(124,58,237,0.1)]" : "ring-white/[0.06]"}`}>
+          <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${hasFieldError("password") ? "text-red-400/70" : focused === "password" ? "text-violet-400/70" : "text-white/20"}`} />
           <input
-            id="password" type="password" required autoComplete="current-password" placeholder="••••••••"
-            value={password} onChange={e => setPassword(e.target.value)}
+            id="password" type="password" autoComplete="current-password" placeholder="Enter your password"
+            value={password} onChange={e => { setPassword(e.target.value); setFieldErrors(f => f.filter(x => x.field !== "password")); }}
             onFocus={() => setFocused("password")} onBlur={() => setFocused(null)}
             className="w-full bg-transparent py-3 pl-10 pr-4 text-sm text-white/80 placeholder:text-white/20 outline-none rounded-xl"
           />
         </div>
+        {fieldError("password") && <p className="text-[11px] text-red-400/80">{fieldError("password")}</p>}
       </div>
 
       <button

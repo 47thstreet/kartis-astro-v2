@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { validateSettings, type FieldError } from '../../lib/validate';
 
 type Props = {
   name: string;
@@ -14,11 +15,20 @@ export default function SettingsForm({ name: initialName, email, role }: Props) 
   const [newPassword, setNewPassword] = useState('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
+
+  const fieldError = (field: string) => fieldErrors.find(e => e.field === field)?.message;
+  const clearFieldError = (field: string) => setFieldErrors(f => f.filter(x => x.field !== field));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     setMessage(null);
+
+    const errors = validateSettings(name, currentPassword, newPassword);
+    setFieldErrors(errors);
+    if (errors.length > 0) return;
+
+    setSaving(true);
 
     const body: any = {};
     if (name !== initialName) body.name = name;
@@ -67,7 +77,8 @@ export default function SettingsForm({ name: initialName, email, role }: Props) 
       <div className="space-y-4">
         <div>
           <label className={labelClass}>Name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
+          <input value={name} onChange={(e) => { setName(e.target.value); clearFieldError('name'); }} className={`${inputClass} ${fieldError('name') ? 'border-red-500/40' : ''}`} />
+          {fieldError('name') && <p className="text-[11px] text-red-400/80 mt-1">{fieldError('name')}</p>}
         </div>
         <div>
           <label className={labelClass}>Email</label>
@@ -85,11 +96,14 @@ export default function SettingsForm({ name: initialName, email, role }: Props) 
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/20">Change Password</p>
         <div>
           <label className={labelClass}>Current Password</label>
-          <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Enter current password" className={inputClass} />
+          <input type="password" value={currentPassword} onChange={(e) => { setCurrentPassword(e.target.value); clearFieldError('currentPassword'); }} placeholder="Enter current password" className={`${inputClass} ${fieldError('currentPassword') ? 'border-red-500/40' : ''}`} />
+          {fieldError('currentPassword') && <p className="text-[11px] text-red-400/80 mt-1">{fieldError('currentPassword')}</p>}
         </div>
         <div>
           <label className={labelClass}>New Password</label>
-          <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 8 characters" className={inputClass} />
+          <input type="password" value={newPassword} onChange={(e) => { setNewPassword(e.target.value); clearFieldError('newPassword'); }} placeholder="Min 8 characters" className={`${inputClass} ${fieldError('newPassword') ? 'border-red-500/40' : ''}`} />
+          {fieldError('newPassword') && <p className="text-[11px] text-red-400/80 mt-1">{fieldError('newPassword')}</p>}
+          <p className="text-[11px] text-white/15 mt-1">Must be at least 8 characters</p>
         </div>
       </div>
 
